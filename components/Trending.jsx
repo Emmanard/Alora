@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ResizeMode, Video } from "expo-av";
+import { useState, useEffect } from "react";
+import { VideoView, useVideoPlayer } from "expo-video";
 import * as Animatable from "react-native-animatable";
 import {
   FlatList,
@@ -9,7 +9,6 @@ import {
 } from "react-native";
 
 import { icons } from "../constants";
-
 
 const zoomIn = {
   0: {
@@ -31,6 +30,37 @@ const zoomOut = {
 
 const TrendingItem = ({ activeItem, item }) => {
   const [play, setPlay] = useState(false);
+  
+  // Create video player instance
+  const player = useVideoPlayer(item.video, (player) => {
+    player.loop = false;
+  });
+
+  // Handle video end
+  useEffect(() => {
+    const subscription = player.addListener('playbackStatusUpdate', (status) => {
+      if (status.status === 'readyToPlay' && play) {
+        player.play();
+      }
+      if (status.status === 'idle' && play) {
+        // Video finished playing
+        setPlay(false);
+      }
+    });
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [player, play]);
+
+  // Control video playback
+  useEffect(() => {
+    if (play) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [play, player]);
 
   return (
     <Animatable.View
@@ -39,17 +69,18 @@ const TrendingItem = ({ activeItem, item }) => {
       duration={500}
     >
       {play ? (
-        <Video
-          source={{ uri: item.video }}
-          className="w-52 h-72 rounded-[33px] mt-3 bg-white/10"
-          resizeMode={ResizeMode.CONTAIN}
-          useNativeControls
-          shouldPlay
-          onPlaybackStatusUpdate={(status) => {
-            if (status.didJustFinish) {
-              setPlay(false);
-            }
+        <VideoView
+          style={{
+            width: 208, // w-52
+            height: 288, // h-72
+            borderRadius: 33,
+            marginTop: 12,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
           }}
+          player={player}
+          allowsFullscreen
+          allowsPictureInPicture
+          contentFit="contain"
         />
       ) : (
         <TouchableOpacity

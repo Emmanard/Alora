@@ -1,12 +1,42 @@
-import { useState } from "react";
-import { ResizeMode, Video } from "expo-av";
+import { useState, useEffect } from "react";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 
 import { icons } from "../constants";
 
 const VideoCard = ({ title, creator, avatar, thumbnail, video }) => {
-
   const [play, setPlay] = useState(false);
+  
+  // Create video player instance
+  const player = useVideoPlayer(video, (player) => {
+    player.loop = false;
+  });
+
+  // Handle video end
+  useEffect(() => {
+    const subscription = player.addListener('playbackStatusUpdate', (status) => {
+      if (status.status === 'readyToPlay' && play) {
+        player.play();
+      }
+      if (status.status === 'idle' && play) {
+        // Video finished playing
+        setPlay(false);
+      }
+    });
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [player, play]);
+
+  // Control video playback
+  useEffect(() => {
+    if (play) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [play, player]);
 
   return (
     <View className="flex flex-col items-center px-4 mb-14">
@@ -42,18 +72,17 @@ const VideoCard = ({ title, creator, avatar, thumbnail, video }) => {
       </View>
 
       {play ? (
-        
-        <Video
-          source={{ uri: video }}
-          className="w-full h-60 rounded-xl mt-3"
-          resizeMode={ResizeMode.CONTAIN}
-          useNativeControls
-          shouldPlay
-          onPlaybackStatusUpdate={(status) => {
-            if (status.didJustFinish) {
-              setPlay(false);
-            }
+        <VideoView
+          style={{
+            width: '100%',
+            height: 240, // h-60
+            borderRadius: 12,
+            marginTop: 12,
           }}
+          player={player}
+          allowsFullscreen
+          allowsPictureInPicture
+          contentFit="contain"
         />
       ) : (
         <TouchableOpacity
@@ -79,5 +108,3 @@ const VideoCard = ({ title, creator, avatar, thumbnail, video }) => {
 };
 
 export default VideoCard;
-
-

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { router } from "expo-router";
-import { ResizeMode, Video } from "expo-av";
+import { VideoView, useVideoPlayer } from "expo-video";
 import * as DocumentPicker from "expo-document-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -14,8 +14,7 @@ import {
 
 import { icons } from "../../constants";
 import { createVideoPost } from "../../lib/appwrite";
-import CustomButton from "../../components/CustomButton";
-import FormFields from "../../components/FormFields";
+import { CustomButton, FormField } from "../../components";
 import { useGlobalContext } from "../../context/GlobalProvider";
 
 const Create = () => {
@@ -28,11 +27,16 @@ const Create = () => {
     prompt: "",
   });
 
+  // Create video player for preview
+  const player = useVideoPlayer(form.video?.uri || "", (player) => {
+    player.loop = true;
+  });
+
   const openPicker = async (selectType) => {
     const result = await DocumentPicker.getDocumentAsync({
       type:
         selectType === "image"
-          ? ["image/png", "image/jpg", 'image/jpeg']
+          ? ["image/png", "image/jpg"]
           : ["video/mp4", "video/gif"],
     });
 
@@ -95,7 +99,7 @@ const Create = () => {
       <ScrollView className="px-4 my-6">
         <Text className="text-2xl text-white font-psemibold">Upload Video</Text>
 
-        <FormFields
+        <FormField
           title="Video Title"
           value={form.title}
           placeholder="Give your video a catchy title..."
@@ -110,10 +114,12 @@ const Create = () => {
 
           <TouchableOpacity onPress={() => openPicker("video")}>
             {form.video ? (
-              <Video
-                source={{ uri: form.video.uri }}
-                className="w-full h-64 rounded-2xl"
-                resizeMode={ResizeMode.COVER}
+              <VideoView
+                style={{ width: "100%", height: 256 }}
+                player={player}
+                allowsFullscreen
+                allowsPictureInPicture
+                contentFit="cover"
               />
             ) : (
               <View className="w-full h-40 px-4 bg-black-100 rounded-2xl border border-black-200 flex justify-center items-center">
@@ -158,7 +164,7 @@ const Create = () => {
           </TouchableOpacity>
         </View>
 
-        <FormFields
+        <FormField
           title="AI Prompt"
           value={form.prompt}
           placeholder="The AI prompt of your video...."

@@ -1,15 +1,11 @@
-import { View, Text, FlatList, Image, RefreshControl } from "react-native";
+import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React, { useState } from "react";
+import { FlatList, Image, RefreshControl, Text, View } from "react-native";
 
 import { images } from "../../constants";
-import SearchInput from "../../components/SearchInput";
-import Trending from "../../components/Trending";
-import EmptyState from "../../components/EmptyState";
-import { getAllPosts, getLatestPosts } from "../../lib/appwrite";
 import useAppwrite from "../../lib/useAppwrite";
-import VideoCard from "../../components/VideoCard";
-import { useGlobalContext } from "../../context/GlobalProvider";
+import { getAllPosts, getLatestPosts } from "../../lib/appwrite";
+import { EmptyState, SearchInput, Trending, VideoCard } from "../../components";
 
 const Home = () => {
   const { data: posts, refetch } = useAppwrite(getAllPosts);
@@ -17,6 +13,13 @@ const Home = () => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [creator, setCreator] = useState('');
+
+  useEffect(() => {
+    // Set creator from the first post if it exists
+    if (posts?.length > 0) {
+      setCreator(posts[0].creator.username);
+    }
+  }, [posts]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -29,19 +32,15 @@ const Home = () => {
       <FlatList
         data={posts}
         keyExtractor={(item) => item.$id}
-        renderItem={({ item }) => {
-          // Update the creator state when rendering each VideoCard
-          setCreator(item.creator.username);
-          return (
-            <VideoCard
-              title={item.title}
-              thumbnail={item.thumbnail}
-              video={item.video}
-              creator={item.creator.username}
-              avatar={item.creator.avatar}
-            />
-          );
-        }}
+        renderItem={({ item }) => (
+          <VideoCard
+            title={item.title}
+            thumbnail={item.thumbnail}
+            video={item.video}
+            creator={item.creator.username}
+            avatar={item.creator.avatar}
+          />
+        )}
         ListHeaderComponent={() => (
           <View className="flex my-6 px-4 space-y-6">
             <View className="flex justify-between items-start flex-row mb-6">

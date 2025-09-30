@@ -1,50 +1,43 @@
-import { View, FlatList, TouchableOpacity, Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import InfoBox from "../../components/infoBox";
-import EmptyState from "../../components/EmptyState";
-import { getAllPosts, signOut } from "../../lib/appwrite";
-import useAppwrite from "../../lib/useAppwrite";
-import VideoCard from "../../components/VideoCard";
-import { useGlobalContext } from "../../context/GlobalProvider";
-import { icons } from "../../constants";
 import { router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { View, Image, FlatList, TouchableOpacity } from "react-native";
+
+import { icons } from "../../constants";
+import useAppwrite from "../../lib/useAppwrite";
+import { getAllPosts, signOut } from "../../lib/appwrite";
+import { useGlobalContext } from "../../context/GlobalProvider";
+import { EmptyState, InfoBox, VideoCard } from "../../components";
 import { useState } from "react";
 
 const Profile = () => {
   const { user, setUser, setIsLogged } = useGlobalContext();
-  const { data: posts,  } = useAppwrite(getAllPosts);
-  const [avatar, setAvatar] = useState('');
-  const [creator, setCreator] = useState('');
-  
+  const { data: posts } = useAppwrite(getAllPosts);
 
   const logout = async () => {
     await signOut();
     setUser(null);
     setIsLogged(false);
-
     router.replace("/sign-in");
   };
 
+  // Get creator info from first post (if exists)
+  const creator = posts && posts.length > 0 ? posts[0].creator.username : user?.name || '';
+  const avatar = posts && posts.length > 0 ? posts[0].creator.avatar : user?.avatar || '';
 
   return (
     <SafeAreaView className="bg-primary h-full">
       <FlatList
         data={posts}
         keyExtractor={(item) => item.$id}
-        renderItem={({ item }) => {
-          setAvatar(item.creator.avatar);
-          setCreator(item.creator.username);
-          return (
-            <VideoCard
-              title={item.title}
-              thumbnail={item.thumbnail}
-              video={item.video}
-              creator={item.creator.username}
-              avatar={item.creator.avatar}
-            />
-          );
-        }}
+        renderItem={({ item }) => (
+          <VideoCard
+            title={item.title}
+            thumbnail={item.thumbnail}
+            video={item.video}
+            creator={item.creator.username}
+            avatar={item.creator.avatar}
+          />
+        )}
         ListEmptyComponent={() => (
           <EmptyState
             title="No Videos Found"
@@ -73,14 +66,14 @@ const Profile = () => {
             </View>
 
             <InfoBox
-              title={creator}
+              title={creator || 'No Name'}
               containerStyles="mt-5"
               titleStyles="text-lg"
             />
 
             <View className="mt-5 flex flex-row">
               <InfoBox
-                title={posts.length || 0}
+                title={posts?.length || 0}
                 subtitle="Posts"
                 titleStyles="text-xl"
                 containerStyles="mr-10"

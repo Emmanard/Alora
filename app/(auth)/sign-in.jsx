@@ -1,11 +1,11 @@
-import { View,  ScrollView, Text, Image, Alert , Dimensions} from 'react-native'
-import React, { useState } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import {images} from '../../constants'
-import FormFields from '../../components/FormFields'
-import CustomButton from '../../components/CustomButton'
-import { Link, router } from 'expo-router'
-import { signIn, getCurrentUser } from '../../lib/appwrite';
+import { useState } from "react";
+import { Link, router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
+
+import { images } from "../../constants";
+import { CustomButton, FormField } from "../../components";
+import { getCurrentUser, signIn } from "../../lib/appwrite";
 import { useGlobalContext } from "../../context/GlobalProvider";
 
 const SignIn = () => {
@@ -57,7 +57,7 @@ const SignIn = () => {
             Log in to Aora
           </Text>
 
-          <FormFields
+          <FormField
             title="Email"
             value={form.email}
             handleChangeText={(e) => setForm({ ...form, email: e })}
@@ -65,7 +65,7 @@ const SignIn = () => {
             keyboardType="email-address"
           />
 
-          <FormFields
+          <FormField
             title="Password"
             value={form.password}
             handleChangeText={(e) => setForm({ ...form, password: e })}
@@ -96,5 +96,4 @@ const SignIn = () => {
   );
 };
 
-
-export default SignIn
+export default SignIn;
