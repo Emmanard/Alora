@@ -1,39 +1,40 @@
 export default {
   expo: {
-    name: "sora",
-    slug: "sora",
+    name: "Alora",
+    slug: "alora",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/images/logo.png",
     userInterfaceStyle: "light",
     splash: {
       image: "./assets/splash.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#ffffff",
     },
-    scheme: "sora",
+    scheme: "alora",
+    extra: {
+      eas: {
+        projectId: "152c6f48-c484-45c9-874d-d3615e5418e8", 
+      },
+    },
     assetBundlePatterns: ["**/*"],
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
+      bundleIdentifier: "com.emmanard9.alora",
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        foregroundImage: "./assets/images/logo.png",
+        backgroundColor: "#ffffff",
       },
-      package: "com.jsm.sora"
+      package: "com.emmanard9.alora",
     },
     web: {
-      favicon: "./assets/favicon.png"
+      favicon: "./assets/favicon.png",
     },
-    plugins: [
-      "expo-router",
-      "expo-font",
-      "expo-asset"
-    ],
-    // 👇 Add this block to fix PlatformConstants issue
+    plugins: ["expo-router", "expo-font", "expo-asset"],
     experiments: {
-      bridgeless: false
-    }
-  }
+      bridgeless: false,
+    },
+  },
 };
