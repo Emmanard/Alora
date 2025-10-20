@@ -44,7 +44,7 @@ const VideoCard = ({ title, creator, avatar, thumbnail, video }) => {
         <View className="flex justify-center items-center flex-row flex-1">
           <View className="w-[46px] h-[46px] rounded-lg border border-secondary flex justify-center items-center p-0.5">
             <Image
-              source={{ uri: avatar }}
+              source={{ uri: creator?.avatar || "https://api.dicebear.com/7.x/thumbs/png?seed=Guest" }}
               className="w-full h-full rounded-lg"
               resizeMode="cover"
             />

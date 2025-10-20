@@ -1,17 +1,17 @@
 export default {
   expo: {
-    name: "Alora",
-    slug: "alora",
+    name: "Aora",
+    slug: "aora",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/logo.png",
     userInterfaceStyle: "light",
     splash: {
-      image: "./assets/splash.png",
+      image: "./assets/images/logo.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff",
+      backgroundColor:  "#000000",
     },
-    scheme: "alora",
+    scheme: "aora",
     extra: {
       eas: {
         projectId: "152c6f48-c484-45c9-874d-d3615e5418e8", 
@@ -20,17 +20,17 @@ export default {
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.emmanard9.alora",
+      bundleIdentifier: "com.emmanard9.aora",
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/images/logo.png",
         backgroundColor: "#ffffff",
       },
-      package: "com.emmanard9.alora",
+      package: "com.emmanard9.aora",
     },
     web: {
-      favicon: "./assets/favicon.png",
+      favicon: "./assets/images/logo-small.png",
     },
     plugins: ["expo-router", "expo-font", "expo-asset"],
     experiments: {

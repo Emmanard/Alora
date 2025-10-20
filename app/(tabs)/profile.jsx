@@ -1,28 +1,45 @@
 import { router } from "expo-router";
+import { Alert, View, Image, FlatList, TouchableOpacity, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Image, FlatList, TouchableOpacity } from "react-native";
-
 import { icons } from "../../constants";
-import useAppwrite from "../../lib/useAppwrite";
-import { getAllPosts, signOut } from "../../lib/appwrite";
 import { useGlobalContext } from "../../context/GlobalProvider";
 import { EmptyState, InfoBox, VideoCard } from "../../components";
-import { useState } from "react";
+import { useUserPosts, useSignOut } from "../../hooks/useQuery";
 
 const Profile = () => {
   const { user, setUser, setIsLogged } = useGlobalContext();
-  const { data: posts } = useAppwrite(getAllPosts);
+  const { data: posts = [] } = useUserPosts(user?.$id);
+  const { mutateAsync: handleSignOut } = useSignOut();
 
   const logout = async () => {
-    await signOut();
-    setUser(null);
-    setIsLogged(false);
-    router.replace("/sign-in");
+    Alert.alert(
+      "Confirm Logout",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes, Log Out",
+          onPress: async () => {
+            try {
+              await handleSignOut();
+              setUser(null);
+              setIsLogged(false);
+              router.replace("/sign-in");
+            } catch (error) {
+              console.error("Logout error:", error);
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
   };
 
-  // Get creator info from first post (if exists)
-  const creator = posts && posts.length > 0 ? posts[0].creator.username : user?.name || '';
-  const avatar = posts && posts.length > 0 ? posts[0].creator.avatar : user?.avatar || '';
+  const creator = user?.username || "User";
+  const avatar = user?.avatar || "";
 
   return (
     <SafeAreaView className="bg-primary h-full">
@@ -41,7 +58,7 @@ const Profile = () => {
         ListEmptyComponent={() => (
           <EmptyState
             title="No Videos Found"
-            subtitle="No videos found for this profile"
+            subtitle="You haven't uploaded any posts yet"
           />
         )}
         ListHeaderComponent={() => (
@@ -66,14 +83,14 @@ const Profile = () => {
             </View>
 
             <InfoBox
-              title={creator || 'No Name'}
+              title={creator}
               containerStyles="mt-5"
               titleStyles="text-lg"
             />
 
             <View className="mt-5 flex flex-row">
               <InfoBox
-                title={posts?.length || 0}
+                title={posts.length || 0}
                 subtitle="Posts"
                 titleStyles="text-xl"
                 containerStyles="mr-10"

@@ -1,38 +1,34 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { getCurrentUser } from "../lib/appwrite";
+
+import { createContext, useContext, useState, useEffect } from "react";
+import { useCurrentUser } from "../hooks/useQuery";
 
 const GlobalContext = createContext();
 export const useGlobalContext = () => useContext(GlobalContext);
 
 const GlobalProvider = ({ children }) => {
-  const [isLogged, setIsLogged] = useState(false);
+  const { data: userData, isLoading, isError } = useCurrentUser();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLogged, setIsLogged] = useState(false);
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const res = await getCurrentUser();
-        if (res) {
-          setIsLogged(true);
-          setUser(res);
-        } else {
-          setIsLogged(false);
-          setUser(null);
-        }
-      } catch (error) {
-        console.log("Auth check failed:", error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUser();
-  }, []);
+    if (userData && !isError) {
+      setUser(userData);
+      setIsLogged(true);
+    } else {
+      setUser(null);
+      setIsLogged(false);
+    }
+  }, [userData, isError]);
 
   return (
     <GlobalContext.Provider
-      value={{ isLogged, setIsLogged, user, setUser, loading }}
+      value={{
+        user,
+        setUser,
+        isLogged,
+        setIsLogged,
+        loading: isLoading,
+      }}
     >
       {children}
     </GlobalContext.Provider>

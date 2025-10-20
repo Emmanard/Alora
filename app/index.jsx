@@ -1,8 +1,8 @@
+import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
-import { Redirect, router } from "expo-router";
+import { router } from "expo-router";
 import { View, Text, Image, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { images } from "../constants";
 import { CustomButton, Loader } from "../components";
 import { useGlobalContext } from "../context/GlobalProvider";
@@ -10,17 +10,26 @@ import { useGlobalContext } from "../context/GlobalProvider";
 const Welcome = () => {
   const { loading, isLogged } = useGlobalContext();
 
-  if (!loading && isLogged) return <Redirect href="/home" />;
+  // 🔹 Handle navigation after loading completes
+  useEffect(() => {
+    if (!loading) {
+      router.replace(isLogged ? "/home" : "/sign-in");
+    }
+  }, [loading, isLogged]);
 
+  // 🔹 Show loader until we know user state
+  if (loading) {
+    return (
+      <SafeAreaView className="bg-primary h-full justify-center items-center">
+        <Loader isLoading={true} />
+      </SafeAreaView>
+    );
+  }
+
+  // 🔹 Display intro briefly before navigation
   return (
     <SafeAreaView className="bg-primary h-full">
-      <Loader isLoading={loading} />
-
-      <ScrollView
-        contentContainerStyle={{
-          height: "100%",
-        }}
-      >
+      <ScrollView contentContainerStyle={{ height: "100%" }}>
         <View className="w-full flex justify-center items-center h-full px-4">
           <Image
             source={images.logo}
@@ -40,7 +49,6 @@ const Welcome = () => {
               Possibilities with{" "}
               <Text className="text-secondary-200">Aora</Text>
             </Text>
-
             <Image
               source={images.path}
               className="w-[136px] h-[15px] absolute -bottom-2 -right-8"

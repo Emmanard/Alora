@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
-import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
@@ -10,175 +10,125 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
 } from "react-native";
-
 import { icons } from "../../constants";
-import { createVideoPost } from "../../lib/appwrite";
 import { CustomButton, FormField } from "../../components";
 import { useGlobalContext } from "../../context/GlobalProvider";
+import { useUploadFile, useCreateVideoPost } from "../../hooks/useQuery";
 
 const Create = () => {
   const { user } = useGlobalContext();
+  const [form, setForm] = useState({ title: "", video: null, thumbnail: null, prompt: "" });
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    video: null,
-    thumbnail: null,
-    prompt: "",
-  });
+  const [uploadProgress, setUploadProgress] = useState("");
 
-  // Create video player for preview
-  const player = useVideoPlayer(form.video?.uri || "", (player) => {
-    player.loop = true;
-  });
+  const { mutateAsync: uploadFile } = useUploadFile();
+  const { mutateAsync: createVideoPost } = useCreateVideoPost();
 
-  const openPicker = async (selectType) => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type:
-        selectType === "image"
-          ? ["image/png", "image/jpg"]
-          : ["video/mp4", "video/gif"],
+  const player = useVideoPlayer(form.video?.uri || "", (player) => (player.loop = true));
+
+  const openPicker = async (type) => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted)
+      return Alert.alert("Permission Required", "Please allow media library access.");
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: type === "image" ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
     });
 
     if (!result.canceled) {
-      if (selectType === "image") {
-        setForm({
-          ...form,
-          thumbnail: result.assets[0],
-        });
-      }
-
-      if (selectType === "video") {
-        setForm({
-          ...form,
-          video: result.assets[0],
-        });
-      }
-    } else {
-      setTimeout(() => {
-        Alert.alert("Document picked", JSON.stringify(result, null, 2));
-      }, 100);
+      const asset = result.assets[0];
+      const file = {
+        name: asset.fileName || `${type}_${Date.now()}`,
+        uri: asset.uri,
+        size: asset.fileSize || 0,
+        type: asset.mimeType || (type === "image" ? "image/jpeg" : "video/mp4"),
+      };
+      setForm({ ...form, [type === "image" ? "thumbnail" : "video"]: file });
     }
   };
 
   const submit = async () => {
-    if (
-      (form.prompt === "") |
-      (form.title === "") |
-      !form.thumbnail |
-      !form.video
-    ) {
-      return Alert.alert("Please provide all fields");
-    }
+    if (!form.prompt || !form.title || !form.thumbnail || !form.video)
+      return Alert.alert("Missing Fields", "Please provide all fields");
 
-    setUploading(true);
     try {
+      setUploading(true);
+      setUploadProgress("Uploading thumbnail...");
+      const thumbnailRes = await uploadFile({ file: form.thumbnail, type: "image" });
+
+      setUploadProgress("Uploading video...");
+      const videoRes = await uploadFile({ file: form.video, type: "video" });
+
+      setUploadProgress("Creating post...");
       await createVideoPost({
         ...form,
+        thumbnail: thumbnailRes.$id,
+        video: videoRes.$id,
         userId: user.$id,
       });
 
-      Alert.alert("Success", "Post uploaded successfully");
-      router.push("/home");
-    } catch (error) {
-      Alert.alert("Error", error.message);
+      Alert.alert("Success 🎉", "Post uploaded successfully", [
+        { text: "OK", onPress: () => router.push("/home") },
+      ]);
+    } catch (err) {
+      Alert.alert("Upload Failed ❌", err.message || "Something went wrong.");
     } finally {
-      setForm({
-        title: "",
-        video: null,
-        thumbnail: null,
-        prompt: "",
-      });
-
       setUploading(false);
+      setUploadProgress("");
+      setForm({ title: "", video: null, thumbnail: null, prompt: "" });
     }
   };
 
   return (
     <SafeAreaView className="bg-primary h-full">
-      <ScrollView className="px-4 my-6">
-        <Text className="text-2xl text-white font-psemibold">Upload Video</Text>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+        <ScrollView className="px-4 my-6">
+          <Text className="text-2xl text-white font-psemibold">Upload Video</Text>
 
-        <FormField
-          title="Video Title"
-          value={form.title}
-          placeholder="Give your video a catchy title..."
-          handleChangeText={(e) => setForm({ ...form, title: e })}
-          otherStyles="mt-10"
-        />
+          <FormField title="Video Title" value={form.title} placeholder="Enter a catchy title..." handleChangeText={(e) => setForm({ ...form, title: e })} otherStyles="mt-10" />
 
-        <View className="mt-7 space-y-2">
-          <Text className="text-base text-gray-100 font-pmedium">
-            Upload Video
-          </Text>
-
-          <TouchableOpacity onPress={() => openPicker("video")}>
+          {/* Video Picker */}
+          <TouchableOpacity onPress={() => openPicker("video")} className="mt-7">
             {form.video ? (
-              <VideoView
-                style={{ width: "100%", height: 256 }}
-                player={player}
-                allowsFullscreen
-                allowsPictureInPicture
-                contentFit="cover"
-              />
+              <VideoView style={{ width: "100%", height: 256 }} player={player} contentFit="cover" />
             ) : (
-              <View className="w-full h-40 px-4 bg-black-100 rounded-2xl border border-black-200 flex justify-center items-center">
-                <View className="w-14 h-14 border border-dashed border-secondary-100 flex justify-center items-center">
-                  <Image
-                    source={icons.upload}
-                    resizeMode="contain"
-                    alt="upload"
-                    className="w-1/2 h-1/2"
-                  />
-                </View>
+              <View className="w-full h-40 bg-black-100 rounded-2xl border border-black-200 flex justify-center items-center">
+                <Image source={icons.upload} className="w-10 h-10 opacity-50" resizeMode="contain" />
               </View>
             )}
           </TouchableOpacity>
-        </View>
 
-        <View className="mt-7 space-y-2">
-          <Text className="text-base text-gray-100 font-pmedium">
-            Thumbnail Image
-          </Text>
-
-          <TouchableOpacity onPress={() => openPicker("image")}>
+          {/* Thumbnail Picker */}
+          <TouchableOpacity onPress={() => openPicker("image")} className="mt-7">
             {form.thumbnail ? (
-              <Image
-                source={{ uri: form.thumbnail.uri }}
-                resizeMode="cover"
-                className="w-full h-64 rounded-2xl"
-              />
+              <Image source={{ uri: form.thumbnail.uri }} className="w-full h-64 rounded-2xl" resizeMode="cover" />
             ) : (
-              <View className="w-full h-16 px-4 bg-black-100 rounded-2xl border-2 border-black-200 flex justify-center items-center flex-row space-x-2">
-                <Image
-                  source={icons.upload}
-                  resizeMode="contain"
-                  alt="upload"
-                  className="w-5 h-5"
-                />
-                <Text className="text-sm text-gray-100 font-pmedium">
-                  Choose a file
-                </Text>
+              <View className="w-full h-16 bg-black-100 rounded-2xl border border-black-200 flex justify-center items-center flex-row">
+                <Image source={icons.upload} className="w-5 h-5 mr-2" resizeMode="contain" />
+                <Text className="text-gray-100">Choose thumbnail</Text>
               </View>
             )}
           </TouchableOpacity>
-        </View>
 
-        <FormField
-          title="AI Prompt"
-          value={form.prompt}
-          placeholder="The AI prompt of your video...."
-          handleChangeText={(e) => setForm({ ...form, prompt: e })}
-          otherStyles="mt-7"
-        />
+          <FormField title="AI Prompt" value={form.prompt} placeholder="Describe your video..." handleChangeText={(e) => setForm({ ...form, prompt: e })} otherStyles="mt-7" />
 
-        <CustomButton
-          title="Submit & Publish"
-          handlePress={submit}
-          containerStyles="mt-7"
-          isLoading={uploading}
-        />
-      </ScrollView>
+          <CustomButton title="Submit & Publish" handlePress={submit} containerStyles="mt-7" isLoading={uploading} />
+
+          {uploading && (
+            <View className="mt-4 items-center">
+              <ActivityIndicator size="small" color="#FF9C01" />
+              <Text className="text-gray-100 text-sm mt-2">{uploadProgress}</Text>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
