@@ -9,13 +9,13 @@ export default {
     splash: {
       image: "./assets/images/logo.png",
       resizeMode: "contain",
-      backgroundColor:  "#000000",
+      backgroundColor: "#000000",
     },
     scheme: "aora",
     extra: {
       eas: {
-        projectId: "152c6f48-c484-45c9-874d-d3615e5418e8", 
-      },
+        projectId: "ec1ecda5-3a54-436c-a00c-791f416ad9ea"
+      }
     },
     assetBundlePatterns: ["**/*"],
     ios: {
