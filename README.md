@@ -40,7 +40,7 @@ Optimized Performance – Fast and responsive across devices
 
 Clone and run the project locally:
 
-git clone https://github.com/yourusername/sora.git
+git clone https://github.com/Emmanard/Alora
 cd sora
 npm install
 npm start
@@ -81,6 +81,6 @@ It was a valuable opportunity to blend creativity and technical depth — from s
 
 📫 Connect
 
-If you’d like to collaborate or discuss mobile development, feel free to reach out or connect with me on LinkedIn
- or Twitter
+If you’d like to collaborate or discuss mobile development, feel free to reach out or connect with me on LinkedIn - https://www.linkedin.com/in/emmanuel-omunizua-80b380301/
+
 .
